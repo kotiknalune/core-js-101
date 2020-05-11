@@ -1,6 +1,6 @@
 /* ************************************************************************************************
  *                                                                                                *
- * Plese read the following tutorial before implementing tasks:                                   *
+ * Please read the following tutorial before implementing tasks:                                   *
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer *
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object        *
  *                                                                                                *
@@ -8,7 +8,7 @@
 
 
 /**
- * Returns the rectagle object with width and height parameters and getArea() method
+ * Returns the rectangle object with width and height parameters and getArea() method
  *
  * @param {number} width
  * @param {number} height
@@ -20,8 +20,10 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  this.width = width;
+  this.height = height;
+  this.getArea = () => this.width * this.height;
 }
 
 
@@ -35,8 +37,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +53,8 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  return Object.setPrototypeOf(JSON.parse(json), proto);
 }
 
 
@@ -64,13 +66,13 @@ function fromJSON(/* proto, json */) {
  *
  *    element#id.class[attr]:pseudoClass::pseudoElement
  *              \----/\----/\----------/
- *              Can be several occurences
+ *              Can be several occurrences
  *
- * All types of selectors can be combined using the combinators ' ','+','~','>' .
+ * All types of selectors can be combined using the combinations ' ','+','~','>' .
  *
  * The task is to design a single class, independent classes or classes hierarchy
  * and implement the functionality to build the css selectors using the provided cssSelectorBuilder.
- * Each selector should have the stringify() method to output the string repsentation
+ * Each selector should have the stringify() method to output the string representation
  * according to css specification.
  *
  * Provided cssSelectorBuilder should be used as facade only to create your own classes,
@@ -110,33 +112,151 @@ function fromJSON(/* proto, json */) {
  *  For more examples see unit tests.
  */
 
+// class Selector {
+//   constructor() {
+//     this.element = '';
+//     this.id = '';
+//     this.class = [];
+//     this.attr = [];
+//     this.pseudoClass = [];
+//     this.pseudoElement = '';
+//   }
+
+//   return() {
+//   return [this.element, this.id, this.class, this.attr, this.pC, this.pE].flat().join('');
+//   }
+
+//   clear() {
+//     this.element = '';
+//     this.id = '';
+//     this.class = [];
+//     this.attr = [];
+//     this.pseudoClass = [];
+//     this.pseudoElement = '';
+//   }
+// }
+
+// const cssSelectorBuilder = {
+//   separators: [' ', '+', '~', '>'],
+//   selector: new Selector(),
+//   value: '',
+
+//   element(value) {
+//     this.selector.element = `${value}`;
+//     return this;
+//   },
+
+//   id(value) {
+//     this.selector.id = `#${value}`;
+//     return this;
+//   },
+
+//   class(value) {
+//     this.selector.class.push(`.${value}`);
+//     return this;
+//   },
+
+//   attr(value) {
+//     this.selector.attr.push(`[${value}]`);
+//     return this;
+//   },
+
+//   pseudoClass(value) {
+//     this.selector.pseudoClass.push(`:${value}`);
+//     return this;
+//   },
+
+//   pseudoElement(value) {
+//     this.selector.pseudoElement = `::${value}`;
+//     return this;
+//   },
+
+//   stringify() {
+//     const result = (this.value) ? this.value : this.selector.return();
+//     this.selector.clear();
+//     return result;
+//   },
+
+//   combine(builder1, separator, builder2) {
+//     const newBuilder = cssSelectorBuilder;
+//     newBuilder.value = `${builder1.stringify()} ${separator} ${builder2.stringify()}`;
+//     return newBuilder;
+//   },
+
+// };
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  order: ['element', 'id', 'class', 'attribute', 'pseudo-class', 'pseudo-element', 'combine'],
+  unique: ['element', 'id', 'pseudo-element'],
+  result: [],
+
+  multiple() {
+    return this.result
+      .map((el) => el.type)
+      .filter((el, i, arr) => arr.indexOf(el) !== i)
+      .every((el) => this.unique.indexOf(el) === -1);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  ordered() {
+    if (this.result.length === 1) return true;
+    return this.result
+      .map((el) => el.type)
+      .filter((el, i, arr) => arr.indexOf(el) === i)
+      .every((el, i, arr) => this.order.indexOf(el) > this.order.indexOf(arr[i - 1]));
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  add(type, ...value) {
+    const newBuilder = { ...this };
+    newBuilder.result = this.result.concat({ type, value: value.join('') });
+
+    if (!newBuilder.multiple()) newBuilder.checkUnique();
+    if (!newBuilder.ordered()) newBuilder.checkOrder();
+
+    return newBuilder;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return this.add('element', value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return this.add('id', `#${value}`);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return this.add('class', `.${value}`);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return this.add('attribute', `[${value}]`);
+  },
+
+  pseudoClass(value) {
+    return this.add('pseudo-class', `:${value}`);
+  },
+
+  pseudoElement(value) {
+    return this.add('pseudo-element', `::${value}`);
+  },
+
+  combine(selector1, separator, selector2) {
+    return this.add('combine', selector1.stringify(), ` ${separator} `, selector2.stringify());
+  },
+
+  return() {
+    return this.result.splice(0, this.result.length).map((el) => el.value).join('');
+  },
+
+  stringify() {
+    return this.return();
+  },
+
+  checkOrder() {
+    throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+  },
+
+  checkUnique() {
+    throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
   },
 };
 
