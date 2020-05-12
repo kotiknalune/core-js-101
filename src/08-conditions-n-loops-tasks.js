@@ -223,8 +223,8 @@ function getIntervalString(/* a, b, isStartIncluded, isEndIncluded */) {
  * 'rotator' => 'rotator'
  * 'noon' => 'noon'
  */
-function reverseString(/* str */) {
-  throw new Error('Not implemented');
+function reverseString(str) {
+  return str.split('').reverse().join('');
 }
 
 
@@ -240,8 +240,8 @@ function reverseString(/* str */) {
  *   87354 => 45378
  *   34143 => 34143
  */
-function reverseInteger(/* num */) {
-  throw new Error('Not implemented');
+function reverseInteger(num) {
+  return Number(num.toString().split('').reverse().join(''));
 }
 
 
@@ -265,8 +265,20 @@ function reverseInteger(/* num */) {
  *   5436468789016589 => false
  *   4916123456789012 => false
  */
-function isCreditCardNumber(/* ccn */) {
-  throw new Error('Not implemented');
+function isCreditCardNumber(ccn) {
+  const str = ccn.toString();
+  const len = str.length;
+  let acc = 0;
+
+  for (let i = 0; i < len; i += 1) {
+    let num = +str[i];
+    if ((len - i) % 2 === 0) {
+      num *= 2;
+      num = (num > 9) ? num -= 9 : num;
+    }
+    acc += num;
+  }
+  return acc % 10 === 0;
 }
 
 /**
@@ -283,10 +295,11 @@ function isCreditCardNumber(/* ccn */) {
  *   10000 ( 1+0+0+0+0 = 1 ) => 1
  *   165536 (1+6+5+5+3+6 = 26,  2+6 = 8) => 8
  */
-function getDigitalRoot(/* num */) {
-  throw new Error('Not implemented');
+function getDigitalRoot(n) {
+  if (n < 9) return n;
+  const root = String(n).split('').reduce((a, b) => a + Number(b), 0);
+  return getDigitalRoot(root);
 }
-
 
 /**
  * Returns true if the specified string has the balanced brackets and false otherwise.
@@ -309,11 +322,12 @@ function getDigitalRoot(/* num */) {
  *   '{)' = false
  *   '{[(<{[]}>)]}' = true
  */
-function isBracketsBalanced(/* str */) {
-  throw new Error('Not implemented');
+function isBracketsBalanced(str) {
+  let braces = str;
+  const re = /\(\)|\[\]|\{\}|<>/g;
+  while (re.test(braces)) { braces = braces.replace(re, ''); }
+  return !braces.length;
 }
-
-
 /**
  * Returns the string with n-ary (binary, ternary, etc, where n <= 10)
  * representation of specified number.
@@ -334,15 +348,15 @@ function isBracketsBalanced(/* str */) {
  *    365, 4  => '11231'
  *    365, 10 => '365'
  */
-function toNaryString(/* num, n */) {
-  throw new Error('Not implemented');
+function toNaryString(num, n) {
+  return num.toString(n);
 }
 
 
 /**
- * Returns the commom directory path for specified array of full filenames.
+ * Returns the common directory path for specified array of full filenames.
  *
- * @param {array} pathes
+ * @param {array} paths
  * @return {string}
  *
  * @example:
@@ -351,10 +365,16 @@ function toNaryString(/* num, n */) {
  *   ['/web/assets/style.css', '/.bin/mocha',  '/read.me'] => '/'
  *   ['/web/favicon.ico', '/web-scripts/dump', '/webalizer/logs'] => '/'
  */
-function getCommonDirectoryPath(/* pathes */) {
-  throw new Error('Not implemented');
-}
 
+function getCommonDirectoryPath(paths) {
+  const commonPath = [];
+  const pathArr = new Array(paths.length).fill(0).map((item, index) => paths[index].split('/'));
+
+  pathArr[0].forEach((dir, index) => {
+    if (pathArr.every((item) => item[index] === dir)) commonPath.push(dir);
+  });
+  return commonPath.length > 0 ? `${commonPath.join('/')}/` : '';
+}
 
 /**
  * Returns the product of two specified matrixes.
@@ -374,20 +394,31 @@ function getCommonDirectoryPath(/* pathes */) {
  *                         [ 6 ]]
  *
  */
-function getMatrixProduct(/* m1, m2 */) {
-  throw new Error('Not implemented');
+function getMatrixProduct(a, b) {
+  const result = new Array(a.length);
+
+  for (let i = 0; i < result.length; i += 1) {
+    result[i] = new Array(b[i].length);
+    for (let j = 0; j < a.length; j += 1) {
+      result[i][j] = 0;
+      for (let k = 0; k < b.length; k += 1) {
+        result[i][j] += a[i][k] * b[k][j];
+      }
+    }
+  }
+  return result;
 }
 
 
 /**
- * Returns the evaluation of the specified tic-tac-toe position.
+ * Returns the evaluation of the specified tic-tac-toe pos.
  * See the details: https://en.wikipedia.org/wiki/Tic-tac-toe
  *
  * Position is provides as 3x3 array with the following values: 'X','0', undefined
- * Function should return who is winner in the current position according to the game rules.
+ * Function should return who is win in the current pos according to the game rules.
  * The result can be: 'X','0',undefined
  *
- * @param {array} position
+ * @param {array} pos
  * @return {string}
  *
  * @example
@@ -409,10 +440,23 @@ function getMatrixProduct(/* m1, m2 */) {
  *    [    ,   ,    ]]
  *
  */
-function evaluateTicTacToePosition(/* position */) {
-  throw new Error('Not implemented');
-}
+function evaluateTicTacToePosition(pos) {
+  let win;
+  pos.forEach((row) => {
+    win = (row.every((mark) => mark === row[0]) && row.length === 3) ? row[0] : win;
+  });
 
+  if (!win) {
+    pos[0].forEach((col, i) => { win = (pos.every((row) => row[i] === col)) ? col : win; });
+  }
+
+  if (!win) {
+    const mid = pos[1][1];
+    const p = function point(a, b) { return pos[a][b] === mid; };
+    win = ((p(0, 0) && p(2, 2)) || (p(0, 2) && p(2, 0))) ? mid : win;
+  }
+  return win;
+}
 
 module.exports = {
   getFizzBuzz,
